@@ -1,10 +1,15 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
+import 'package:html/parser.dart';
+import 'package:html/dom.dart' as dom;
+import 'package:http/http.dart' as http;
 
 import '../../models/mini_list_model.dart';
 import '../../values/styles.dart';
 import 'bloc/mini_list_bloc.dart';
+
+String? _htmlData;
 
 class MiniListScreen extends StatefulWidget {
   const MiniListScreen({super.key});
@@ -22,6 +27,19 @@ class _HomeScreenState extends State<MiniListScreen> {
     super.initState();
     _miniListBloc = BlocProvider.of<MiniListBloc>(context);
     _miniListBloc.add(LoadMiniList(searchText));
+    _fetchData();
+  }
+
+  Future<void> _fetchData() async {
+    final response = await http.get(Uri.parse(
+        'https://garagedreams.net/buyers-guide/first-gen-mini-r50-r52-r53-buyers-guide'));
+    if (response.statusCode == 200) {
+      setState(() {
+        _htmlData = response.body;
+      });
+    } else {
+      throw Exception('Failed to load');
+    }
   }
 
   @override
@@ -125,8 +143,7 @@ class _HomeScreenState extends State<MiniListScreen> {
                       final mini = state.miniListResponseData[index];
                       return MiniListing(
                         title: mini.title ?? '',
-                        image: mini.image ?? '',
-                        description: mini.description ?? '',
+                        id: mini.id ?? '',
                         onTap: () =>
                             showMiniDetailsModalBottomSheet(context, mini),
                       );
@@ -150,16 +167,11 @@ class _HomeScreenState extends State<MiniListScreen> {
 
 class MiniListing extends StatelessWidget {
   final String title;
-  final String image;
-  final String description;
+  final String id;
   final VoidCallback onTap;
 
   const MiniListing(
-      {super.key,
-      required this.title,
-      required this.image,
-      required this.description,
-      required this.onTap});
+      {super.key, required this.title, required this.id, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -177,12 +189,6 @@ class MiniListing extends StatelessWidget {
                 style: ValueStyles.title,
               ),
               const SizedBox(height: 10),
-              Text(
-                description,
-                style: ValueStyles.bodyGrey,
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
-              ),
             ],
           ),
         ),
@@ -222,26 +228,8 @@ void showMiniDetailsModalBottomSheet(BuildContext context, MiniListModel mini) {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 15),
-                    Text(
-                      mini.title!,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 20,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    CachedNetworkImage(
-                      imageUrl: mini.image ?? '',
-                      placeholder: (context, url) =>
-                          const Center(child: CircularProgressIndicator()),
-                      errorWidget: (context, url, error) =>
-                          const Icon(Icons.error),
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                    ),
-                    const SizedBox(height: 10),
-                    Text(mini.description ?? '', style: ValueStyles.bodyBlack),
+                    HtmlWidget(simplifyImageTags(
+                        extractContent(_htmlData ?? '', mini.id!))),
                     const SizedBox(height: 20),
                   ],
                 ),
@@ -252,4 +240,46 @@ void showMiniDetailsModalBottomSheet(BuildContext context, MiniListModel mini) {
       ),
     ),
   );
+}
+
+String extractContent(String htmlContent, String id) {
+  var document = parse(htmlContent);
+  StringBuffer extractedContent = StringBuffer();
+  bool startCollecting = false;
+
+  dom.Element? startElement =
+      document.querySelector('h2 span[id="$id"]')?.parent;
+  if (startElement != null) {
+    dom.Element? currentElement = startElement;
+    while (currentElement != null) {
+      if (startCollecting) {
+        if (currentElement.localName == 'h2' &&
+            currentElement != startElement) {
+          break;
+        }
+        extractedContent.write(currentElement.outerHtml);
+      } else {
+        extractedContent.write(currentElement.outerHtml);
+        startCollecting = true;
+      }
+      currentElement = currentElement.nextElementSibling;
+    }
+  }
+  return extractedContent.toString();
+}
+
+String simplifyImageTags(String htmlContent) {
+  var document = parse(htmlContent);
+
+  document.querySelectorAll('img').forEach((img) {
+    var src = img.attributes['data-src'] ?? img.attributes['src'];
+    var newImgTag = '<img src="$src" />';
+    img.replaceWith(parseFragment(newImgTag));
+  });
+
+  document.querySelectorAll('noscript').forEach((noscript) {
+    noscript.remove();
+  });
+
+  return document.body?.innerHtml ?? '';
 }

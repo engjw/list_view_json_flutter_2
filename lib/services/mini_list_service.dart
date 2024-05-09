@@ -17,12 +17,8 @@ class MiniListService implements MiniListRepository {
 
     if (searchText.isNotEmpty) {
       miniList = miniList.where((mini) {
-        return (mini.title?.toLowerCase().contains(searchText.toLowerCase()) ??
-                false) ||
-            (mini.description
-                    ?.toLowerCase()
-                    .contains(searchText.toLowerCase()) ??
-                false);
+        return mini.title?.toLowerCase().contains(searchText.toLowerCase()) ??
+            false;
       }).toList();
     }
 

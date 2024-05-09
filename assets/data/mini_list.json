@@ -1,33 +1,39 @@
 [
     {
       "title": "History of the First Gen Mini Cooper (2001 to 2006) and Mini Convertible (2004 to 2008)",
-      "image": "https://garagedreams.net/wp-content/uploads/2022/07/History-of-the-MINI.jpg",
-      "description": "The original Mini produced by the British Motor Corporation (BMC) was the brainchild of Alec Issigonis (also known as Sir Alexander Arnold Constantine Issigonis). He was given the task of creating three new vehicles at the end of 1955, with one of them being a small, yet practical compact car with excellent fuel economy and a very affordable price."
+      "id": "History_of_the_First_Gen_Mini_Cooper_2001_to_2006_and_Mini_Convertible_2004_to_2008"
     },
     {
       "title": "First Generation MINI Specifications",
-      "image": "https://garagedreams.net/wp-content/uploads/2022/07/MINI-Cooper-S-Convertible-Buyers-Guide-History-2.jpg",
-      "description": "While the hard-top first generation MINI Cooper would end production in 2006, the convertible would not see an end to production until the middle of 2008. The final car – a MINI Cooper S Convertible Sidewalk finished in metallic White Silver was sold to a fan in the United States."
+      "id": "First_Generation_MINI_Specifications"
     },
     {
       "title": "MINI Cooper and Cooper S (R50, R52 and R53) Buyer’s Guide",
-      "image": "https://garagedreams.net/wp-content/uploads/2022/07/MINI-Cooper-S-John-Cooper-Works-Buyers-Guide-3.jpg",
-      "description": "Unfortunately, while the first generation MINI won many fans at launch for its great styling, fantastic driving characterises and plethora of options, the car today has a bit of a reputation for reliability issues. Many of these problems are down to how individual first generation MINIs have been maintained and treated. However, even with good maintenance the R50 to R53 MINI isn’t going to be as reliable or as cheap to run as a Toyota or Honda."
+      "id": "MINI_Cooper_and_Cooper_S_R50_R52_and_R53_Buyers_Guide"
     },
     {
-      "title": "Suspension & Steering",
-      "image": "https://garagedreams.net/wp-content/uploads/2022/07/MINI-Cooper-S-John-Cooper-Works-GP-Buyers-Guide-and-Facts-2.jpg",
-      "description": "The strut towers deforming/bulging is one of the biggest problems here. It isn’t usually too much of an issue if it is not severe, but if the mounts have torn and the deformation is bad, the strut tower will need to be replaced. If you have to replace one, it is usually recommended that you replace the other as well, so factor this into the price."
+      "title": "MINI VIN Decoded/Explained",
+      "id": "MINI_VIN_DecodedExplained"
     },
     {
       "title": "Engine",
-      "image": "https://garagedreams.net/wp-content/uploads/2022/07/MINI-Cooper-S-Buyers-Guide-History-7.jpg",
-      "description": "The engines in Cooper and Cooper S are pretty much identical apart from the supercharger. The other main difference is that the water pump is driven off the supercharger on the Cooper S, which has caused some issues on some MINIs, but it doesn’t seem to be a massive problem (we will discuss this in more detail later in this section)."
+      "id": "Engine"
     },
     {
       "title": "Transmission",
-      "image": "https://garagedreams.net/wp-content/uploads/2022/07/MINI-Cooper-S-Buyers-Guide-History-4.jpg",
-      "description": "Both Cooper and Cooper S models were offered with a few different transmission options. The standard Cooper (R50) came with either a 5-speed manual gearbox or a CVT, while the Cooper S (R53) received either a 6-speed Getrag manual or a 6-speed Aisin automatic transmission. Let’s start this section by looking at the MINI’s manual options first."
+      "id": "Transmission"
+    },
+    {
+      "title": "Suspension & Steering",
+      "id": "Suspension_Steering"
+    },
+    {
+      "title": "Brakes",
+      "id": "Brakes"
+    },
+    {
+      "title": "Bodywork & Exterior",
+      "id": "Bodywork_Exterior"
     }
 ]
   
