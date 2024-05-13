@@ -1,15 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
-import 'package:html/parser.dart';
-import 'package:html/dom.dart' as dom;
-import 'package:http/http.dart' as http;
 
-import '../../models/mini_list_model.dart';
 import '../../values/styles.dart';
 import 'bloc/mini_list_bloc.dart';
-
-String? _htmlData;
 
 class MiniListScreen extends StatefulWidget {
   const MiniListScreen({super.key});
@@ -20,26 +14,14 @@ class MiniListScreen extends StatefulWidget {
 class _HomeScreenState extends State<MiniListScreen> {
   final TextEditingController _searchController = TextEditingController();
   late MiniListBloc _miniListBloc;
-  String searchText = '';
+  String _searchText = '';
+  String _fullContent = '';
 
   @override
   void initState() {
     super.initState();
     _miniListBloc = BlocProvider.of<MiniListBloc>(context);
-    _miniListBloc.add(LoadMiniList(searchText));
-    _fetchData();
-  }
-
-  Future<void> _fetchData() async {
-    final response = await http.get(Uri.parse(
-        'https://garagedreams.net/buyers-guide/first-gen-mini-r50-r52-r53-buyers-guide'));
-    if (response.statusCode == 200) {
-      setState(() {
-        _htmlData = response.body;
-      });
-    } else {
-      throw Exception('Failed to load');
-    }
+    _miniListBloc.add(const LoadFullContentEvent());
   }
 
   @override
@@ -98,7 +80,7 @@ class _HomeScreenState extends State<MiniListScreen> {
                               color: Colors.black.withOpacity(0.3)),
                         ),
                         suffixIcon: Visibility(
-                          visible: searchText.isNotEmpty,
+                          visible: _searchText.isNotEmpty,
                           child: IconButton(
                             icon: const Icon(
                               Icons.clear,
@@ -106,9 +88,10 @@ class _HomeScreenState extends State<MiniListScreen> {
                             ),
                             onPressed: () => {
                               setState(() {
-                                searchText = '';
+                                _searchText = '';
                                 _searchController.text = '';
-                                _miniListBloc.add(LoadMiniList(searchText));
+                                _miniListBloc.add(LoadMiniListEvent(
+                                    _searchText, _fullContent));
                               })
                             },
                           ),
@@ -116,9 +99,10 @@ class _HomeScreenState extends State<MiniListScreen> {
                       ),
                       onSubmitted: (value) {
                         setState(() {
-                          searchText = value;
+                          _searchText = value;
                         });
-                        _miniListBloc.add(LoadMiniList(searchText));
+                        _miniListBloc
+                            .add(LoadMiniListEvent(_searchText, _fullContent));
                       },
                     ),
                   ],
@@ -130,33 +114,48 @@ class _HomeScreenState extends State<MiniListScreen> {
         ),
         body: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: BlocBuilder<MiniListBloc, MiniListState>(
+          child: BlocConsumer<MiniListBloc, MiniListState>(
+            listener: (context, state) {
+              if (state is FullContentLoaded) {
+                _fullContent = state.fullContentResponseData;
+                _miniListBloc.add(LoadMiniListEvent(_searchText, _fullContent));
+              }
+              if (state is MiniDetailLoaded) {
+                showMiniDetailsModalBottomSheet(
+                    context, state.miniDetailResponseData);
+                _miniListBloc.add(LoadMiniListEvent(_searchText, _fullContent));
+              }
+            },
             builder: (context, state) {
-              if (state is MiniListLoading) {
-                return const Center(child: CircularProgressIndicator());
-              }
-              if (state is MiniListLoaded) {
-                if (state.miniListResponseData.isNotEmpty) {
-                  return ListView.builder(
-                    itemCount: state.miniListResponseData.length,
-                    itemBuilder: (context, index) {
-                      final mini = state.miniListResponseData[index];
-                      return MiniListing(
-                        title: mini.title ?? '',
-                        id: mini.id ?? '',
-                        onTap: () =>
-                            showMiniDetailsModalBottomSheet(context, mini),
+              return BlocBuilder<MiniListBloc, MiniListState>(
+                builder: (context, state) {
+                  if (state is MiniListLoading) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  if (state is MiniListLoaded) {
+                    if (state.miniListResponseData.isNotEmpty) {
+                      return ListView.builder(
+                        itemCount: state.miniListResponseData.length,
+                        itemBuilder: (context, index) {
+                          final mini = state.miniListResponseData[index];
+                          return MiniListing(
+                              title: mini.title ?? '',
+                              id: mini.id ?? '',
+                              onTap: () => _miniListBloc.add(
+                                  LoadMiniDetailEvent(
+                                      _fullContent, mini.id ?? '')));
+                        },
                       );
-                    },
-                  );
-                } else {
-                  return const Center(
-                      child: Text(
-                          "No results found. Please try a different search."));
-                }
-              }
+                    } else {
+                      return const Center(
+                          child: Text(
+                              "No results found. Please try a different search."));
+                    }
+                  }
 
-              return Container();
+                  return Container();
+                },
+              );
             },
           ),
         ),
@@ -186,7 +185,7 @@ class MiniListing extends StatelessWidget {
             children: [
               Text(
                 title,
-                style: ValueStyles.title,
+                style: ValueStyles.titleBlack,
               ),
               const SizedBox(height: 10),
             ],
@@ -197,7 +196,8 @@ class MiniListing extends StatelessWidget {
   }
 }
 
-void showMiniDetailsModalBottomSheet(BuildContext context, MiniListModel mini) {
+void showMiniDetailsModalBottomSheet(
+    BuildContext context, ContentResult miniDetail) {
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
@@ -228,12 +228,14 @@ void showMiniDetailsModalBottomSheet(BuildContext context, MiniListModel mini) {
                         ),
                       ),
                     ),
-                    HtmlWidget(simplifyImageTags(
-                        extractContent(_htmlData ?? '', mini.id!))),
+                    if (miniDetail.tableData != null)
+                      CustomTableWidget(tableData: miniDetail.tableData!)
+                    else
+                      HtmlWidget(miniDetail.htmlContent),
                     const SizedBox(height: 20),
                   ],
                 ),
-              ),
+              )
             ],
           ),
         ),
@@ -242,44 +244,58 @@ void showMiniDetailsModalBottomSheet(BuildContext context, MiniListModel mini) {
   );
 }
 
-String extractContent(String htmlContent, String id) {
-  var document = parse(htmlContent);
-  StringBuffer extractedContent = StringBuffer();
-  bool startCollecting = false;
+class CustomTableWidget extends StatelessWidget {
+  final List<Map<String, String>> tableData;
 
-  dom.Element? startElement =
-      document.querySelector('h2 span[id="$id"]')?.parent;
-  if (startElement != null) {
-    dom.Element? currentElement = startElement;
-    while (currentElement != null) {
-      if (startCollecting) {
-        if (currentElement.localName == 'h2' &&
-            currentElement != startElement) {
-          break;
-        }
-        extractedContent.write(currentElement.outerHtml);
-      } else {
-        extractedContent.write(currentElement.outerHtml);
-        startCollecting = true;
-      }
-      currentElement = currentElement.nextElementSibling;
-    }
+  const CustomTableWidget({super.key, required this.tableData});
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Theme(
+        data: Theme.of(context).copyWith(
+          dataTableTheme: DataTableThemeData(
+            headingRowColor: MaterialStateProperty.resolveWith<Color?>(
+                (Set<MaterialState> states) => Theme.of(context).primaryColor),
+            dataRowColor: MaterialStateProperty.resolveWith<Color?>(
+                (Set<MaterialState> states) => Colors.blue[50]),
+            headingTextStyle: ValueStyles.titleWhite,
+            dataTextStyle: ValueStyles.bodyBlack,
+          ),
+        ),
+        child: DataTable(
+          columns: _createColumns(),
+          rows: _createRows(),
+          columnSpacing: 38,
+          horizontalMargin: 20,
+        ),
+      ),
+    );
   }
-  return extractedContent.toString();
-}
 
-String simplifyImageTags(String htmlContent) {
-  var document = parse(htmlContent);
+  List<DataColumn> _createColumns() {
+    if (tableData.isNotEmpty) {
+      return tableData.first.keys
+          .map((key) => DataColumn(label: Text(key)))
+          .toList();
+    }
+    return [];
+  }
 
-  document.querySelectorAll('img').forEach((img) {
-    var src = img.attributes['data-src'] ?? img.attributes['src'];
-    var newImgTag = '<img src="$src" />';
-    img.replaceWith(parseFragment(newImgTag));
-  });
-
-  document.querySelectorAll('noscript').forEach((noscript) {
-    noscript.remove();
-  });
-
-  return document.body?.innerHtml ?? '';
+  List<DataRow> _createRows() {
+    return tableData.map((Map<String, String> row) {
+      return DataRow(
+          cells: row.values
+              .map((value) => DataCell(
+                    Container(
+                      width: 200,
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 4, horizontal: 4),
+                      child: Text(value),
+                    ),
+                  ))
+              .toList());
+    }).toList();
+  }
 }

@@ -8,6 +8,15 @@ class MiniListLoading extends MiniListState {
   List<Object?> get props => [];
 }
 
+class FullContentLoaded extends MiniListState {
+  final String fullContentResponseData;
+
+  FullContentLoaded(this.fullContentResponseData);
+
+  @override
+  List<Object?> get props => [fullContentResponseData];
+}
+
 class MiniListLoaded extends MiniListState {
   final List<MiniListModel> miniListResponseData;
 
@@ -15,4 +24,20 @@ class MiniListLoaded extends MiniListState {
 
   @override
   List<Object?> get props => [miniListResponseData];
+}
+
+class MiniDetailLoaded extends MiniListState {
+  final ContentResult miniDetailResponseData;
+
+  MiniDetailLoaded(this.miniDetailResponseData);
+
+  @override
+  List<Object?> get props => [miniDetailResponseData];
+}
+
+class ContentResult {
+  final String htmlContent;
+  final List<Map<String, String>>? tableData;
+
+  ContentResult({this.htmlContent = '', this.tableData});
 }

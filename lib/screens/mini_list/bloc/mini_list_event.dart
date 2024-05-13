@@ -5,10 +5,28 @@ abstract class MiniListEvent extends Equatable {
   const MiniListEvent();
 }
 
-class LoadMiniList extends MiniListEvent {
-  final String searchText;
+class LoadFullContentEvent extends MiniListEvent {
+  const LoadFullContentEvent();
 
-  const LoadMiniList(this.searchText);
+  @override
+  List<Object?> get props => [];
+}
+
+class LoadMiniListEvent extends MiniListEvent {
+  final String searchText;
+  final String fullContent;
+
+  const LoadMiniListEvent(this.searchText, this.fullContent);
+
+  @override
+  List<Object?> get props => [];
+}
+
+class LoadMiniDetailEvent extends MiniListEvent {
+  final String fullContent;
+  final String id;
+
+  const LoadMiniDetailEvent(this.fullContent, this.id);
 
   @override
   List<Object?> get props => [];
